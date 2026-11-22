@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws-guard"
+version = "0.1.0"
+description = "Read-only AWS security and cost scanner, mapped to AWS Security Hub (FSBP) controls."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "MIT" }
+authors = [{ name = "Victor Benson" }]
+dependencies = ["boto3>=1.34", "rich>=13", "jinja2>=3.1"]
+
+[project.optional-dependencies]
+demo = ["moto[s3,ec2,iam,rds,sts]>=5"]
+ai = ["anthropic>=0.40"]
+dev = ["moto[s3,ec2,iam,rds,sts]>=5", "pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+aws-guard = "aws_guard.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+aws_guard = ["templates/*.j2"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["E501"]  # long messages are fine; ruff format handles layout
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

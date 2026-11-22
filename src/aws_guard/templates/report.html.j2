@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>aws-guard report · {{ result.region }}</title>
+<style>
+  :root { --ink:#16191f; --soft:#5f6b7a; --line:#e3e7eb; --bg:#f4f5f7; --crit:#b0182b; --high:#e0482f; --med:#c98a00; --low:#3a7bd5; --ok:#1a8f4a; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.55 ui-sans-serif, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  header { background:#232f3e; color:#fff; padding:18px 32px; display:flex; justify-content:space-between; align-items:baseline; flex-wrap:wrap; gap:8px; }
+  header b { font-size:18px; } header span { color:#c7ccd3; font-size:13px; }
+  main { max-width:1080px; margin:0 auto; padding:28px 24px 60px; }
+  .top { display:grid; grid-template-columns: 220px 1fr; gap:20px; }
+  .panel { background:#fff; border:1px solid var(--line); border-radius:10px; padding:20px; }
+  .score { text-align:center; }
+  .dial { --p: {{ score }}; width:150px; height:150px; margin:0 auto; border-radius:50%;
+          background: conic-gradient({% if score >= 90 %}var(--ok){% elif score >= 70 %}var(--med){% elif score >= 40 %}var(--high){% else %}var(--crit){% endif %} calc(var(--p) * 1%), #eef0f3 0);
+          display:grid; place-items:center; }
+  .dial div { width:118px; height:118px; border-radius:50%; background:#fff; display:grid; place-items:center; }
+  .dial strong { font-size:40px; line-height:1; } .dial small { color:var(--soft); }
+  .grade { margin-top:10px; font-weight:600; }
+  .counts { display:flex; gap:10px; flex-wrap:wrap; margin:14px 0 0; }
+  .pill { border-radius:999px; padding:3px 10px; font-size:12px; font-weight:700; color:#fff; white-space:nowrap; }
+  .CRITICAL { background:var(--crit); } .HIGH { background:var(--high); } .MEDIUM { background:var(--med); } .LOW { background:var(--low); }
+  h2 { font-size:17px; margin:0 0 8px; }
+  .summary { color:#2b333d; }
+  .ai { margin-top:14px; padding:12px 14px; background:#f3f7ff; border-left:3px solid var(--low); border-radius:6px; white-space:pre-wrap; }
+  table { width:100%; border-collapse:collapse; margin-top:20px; background:#fff; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+  th { text-align:left; font-size:12px; color:var(--soft); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--line); background:#fafbfc; }
+  td { padding:11px 12px; border-bottom:1px solid var(--line); vertical-align:top; }
+  tr:last-child td { border-bottom:0; }
+  .res { font-family: ui-monospace, Menlo, monospace; font-size:12.5px; color:#34404d; word-break:break-all; }
+  .fix { color:var(--soft); font-size:13.5px; margin-top:3px; }
+  .ctrl { font-family: ui-monospace, Menlo, monospace; font-size:12px; color:var(--soft); }
+  .cost { text-align:right; white-space:nowrap; font-variant-numeric: tabular-nums; }
+  footer { margin-top:24px; color:var(--soft); font-size:12.5px; }
+  @media (max-width: 720px) { .top { grid-template-columns: 1fr; } .hide-sm { display:none; } }
+</style>
+</head>
+<body>
+<header>
+  <b>aws-guard</b>
+  <span>region {{ result.region }}{% if result.account %} · account …{{ result.account[-4:] }}{% endif %} · {{ generated }}</span>
+</header>
+<main>
+  <section class="top">
+    <div class="panel score">
+      <div class="dial"><div><span><strong>{{ score }}</strong><br><small>/ 100</small></span></div></div>
+      <div class="grade">{{ grade }}</div>
+    </div>
+    <div class="panel">
+      <h2>Summary</h2>
+      <p class="summary">{{ summary }}</p>
+      <div class="counts">
+        {% for sev, n in counts.items() %}<span class="pill {{ sev }}">{{ n }} {{ sev|lower }}</span>{% endfor %}
+        {% if waste %}<span class="pill" style="background:#2b333d">~${{ "%.2f"|format(waste) }}/month waste</span>{% endif %}
+      </div>
+      {% if ai_text %}<div class="ai"><b>AI summary</b> (anonymised findings only)<br>{{ ai_text }}</div>{% endif %}
+    </div>
+  </section>
+
+  <table>
+    <thead><tr><th>Severity</th><th>Finding</th><th class="hide-sm">Resource</th><th class="hide-sm">Control</th><th class="cost">$/month</th></tr></thead>
+    <tbody>
+    {% for f in findings %}
+      <tr>
+        <td><span class="pill {{ f.severity.name }}">{{ f.severity.name }}</span></td>
+        <td><b>{{ f.title }}</b><div class="fix">Fix: {{ f.fix }}</div></td>
+        <td class="res hide-sm">{{ f.resource }}</td>
+        <td class="ctrl hide-sm">{{ f.control or "cost" }}</td>
+        <td class="cost">{% if f.monthly_cost %}${{ "%.2f"|format(f.monthly_cost) }}{% endif %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="5">No findings. 🎉</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if result.skipped %}<p class="fix">Skipped: {{ result.skipped|join("; ") }}</p>{% endif %}
+  <footer>
+    aws-guard {{ version }} · read-only scan · controls refer to the AWS Security Hub Foundational Security Best Practices standard ·
+    costs are estimates from us-east-1 list prices
+  </footer>
+</main>
+</body>
+</html>
