@@ -1,5 +1,7 @@
 # aws-guard
 
+[![CI](https://github.com/macroer16/aws-guard/actions/workflows/ci.yml/badge.svg)](https://github.com/macroer16/aws-guard/actions/workflows/ci.yml) ![Python 3.12](https://img.shields.io/badge/python-3.12-blue) ![License: MIT](https://img.shields.io/badge/license-MIT-green)
+
 **A read-only scanner that finds security risks and wasted money in an AWS account** — public buckets, open SSH,
 root without MFA, databases without backups, forgotten volumes still billing — and tells you what to fix first.
 
